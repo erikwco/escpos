@@ -65,6 +65,22 @@ type Escpos struct {
 	reverse, smooth uint8
 }
 
+// SetCharacterCodeTable Select character code table
+func (e *Escpos) SetCharacterCodeTable(code int) {
+	e.Write(fmt.Sprintf("\x1Bt%c", code))
+}
+
+// WriteAndFeed Set new line after writing the data
+func (e *Escpos) WriteAndFeed(data string) (int, error) {
+	i, err := e.WriteRaw([]byte(data))
+	e.Linefeed()
+	return i, err
+}
+
+func (e *Escpos) ReturnHead() (int, error) {
+	return e.Write(fmt.Sprintf("\x1B\x3C"))
+}
+
 // reset toggles
 func (e *Escpos) reset() {
 	e.width = 1
@@ -198,7 +214,7 @@ func (e *Escpos) SendUpsidedown() {
 	e.Write(fmt.Sprintf("\x1B{%c", e.upsidedown))
 }
 
-// send rotate
+// SendRotate n/a TMU220
 func (e *Escpos) SendRotate() {
 	e.Write(fmt.Sprintf("\x1BR%c", e.rotate))
 }
@@ -584,6 +600,8 @@ func (e *Escpos) WriteNode(name string, params map[string]string, data string) {
 
 // ReadStatus Read the status n from the printer
 func (e *Escpos) ReadStatus(n byte) (byte, error) {
+	log.Printf("Consultando estado del impresor")
+	//e.WriteRaw([]byte(fmt.Sprintf("\x10\x04\x01")))
 	e.WriteRaw([]byte{DLE, EOT, n})
 	data := make([]byte, 1)
 	_, err := e.ReadRaw(data)
